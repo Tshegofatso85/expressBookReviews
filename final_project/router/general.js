@@ -22,32 +22,66 @@ public_users.post("/register", (req,res) => {
 });
 
 // Get the book list available in the shop
-public_users.get('/',function (req, res) {
-  return res.status(200).json(books);
+public_users.get('/', (req, res) => {  
+    const getBooks = () => new Promise((resovle) => resovle(books));
+
+    getBooks()
+      .then(books => {
+        books ? res.status(200).json(books) : res.status(404).json({ message: "Books not found" }) 
+      })
+      .catch(() => {
+        res.status(500).json({ message: "Internal server error"});
+      })
 });
 
-// Get book details based on ISBN
-public_users.get('/isbn/:isbn',function (req, res) {
-  const isbn = req.params.isbn;
-  const book = books[isbn]
-  return book ? res.status(200).json(books[`${isbn}`]) : res.status(404).json({ message: "Book not found for the given ISBN" });
- });
+public_users.get('/isbn/:isbn', (req, res) => {
+    const isbn = req.params.isbn;
+    const getBookByIsbn = (isbn) => new Promise((resolve) => resolve(books[isbn]));
+  
+    getBookByIsbn(isbn)
+      .then((book) => {
+        book ? res.status(200).json(book) : res.status(404).json({ message: "Book not found for the given ISBN" });
+      })
+      .catch(() => {
+        res.status(500).json({ message: "Internal server error"});
+      });
+});
   
 // Get book details based on author
 public_users.get('/author/:author',function (req, res) {
-  const author = req.params.author;
-  const keys = Object.keys(books);
-  const findAuthor = keys.filter(key => books[key].author.toLowerCase() === author.toLowerCase()).map(key => books[key]);
+    const author = req.params.author;
+    const keys = Object.keys(books);
 
-  return findAuthor.length > 0 ? res.status(200).json(findAuthor) : res.status(404).json({message: "Author is not found"})
+    const findAuthor = (author, keys) => new Promise((resolve) => {
+     resolve(keys.filter(key => books[key].author.toLowerCase() === author.toLowerCase()).map(key => books[key]))
+    })
+
+    findAuthor(author, keys)
+      .then((foundAuthor) => {
+        foundAuthor.length > 0 ? res.status(200).json(foundAuthor) : res.status(404).json({message: "Author is not found"});
+      })
+      .catch(() => {
+        res.status(500).json({ message: "Internal server error"});
+      })
+
 });
 
 // Get all books based on title
 public_users.get('/title/:title',function (req, res) {
   const title = req.params.title;
   const keys = Object.keys(books);
-  const findTitle = keys.find(key => books[key].title.toLowerCase() === title.toLowerCase())  
-  return findTitle ? res.status(200).json(books[findTitle]) : res.status(404).json({message: "Title not found"});
+
+  const findTitle = (title, keys) => new Promise((resolve) => {
+    resolve(keys.find(key => books[key].title.toLowerCase() === title.toLowerCase()))
+  })
+  
+  findTitle(title, keys)
+    .then((foundTitle) => {
+      foundTitle ? res.status(200).json(books[foundTitle]) : res.status(404).json({message: "Title not found"});
+    })
+    .catch(() => {
+      res.status(500).json({ message: "Internal server error"});
+    })
 });
 
 //  Get book review
